@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head><title>Workout Report</title></head>
+<body>
+    <h1>Workout Report</h1>
+    <p><strong>Filters Applied:</strong></p>
+    <ul>
+        <li>Calories: {{ filters.min_calories }} - {{ filters.max_calories }}</li>
+        <li>Duration: {{ filters.min_duration }} - {{ filters.max_duration }} minutes</li>
+        <li>Date: {{ filters.start_date }} to {{ filters.end_date }}</li>
+    </ul>
+    
+    <h2>Results ({{ workouts|length }} workouts found)</h2>
+    <table border="1" cellpadding="10">
+        <tr>
+            <th>Workout ID</th><th>User</th><th>Date</th><th>Duration (min)</th><th>Calories</th><th>Notes</th>
+        </tr>
+        {% for workout in workouts %}
+        <tr>
+            <td>{{ workout.workout_id }}</td>
+            <td>{{ workout.username }}</td>
+            <td>{{ workout.workout_date }}</td>
+            <td>{{ workout.duration_minutes }}</td>
+            <td>{{ workout.total_calories }}</td>
+            <td>{{ workout.notes }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    <br><a href="/workouts/filter">← Change Filters</a> | <a href="/">Home</a>
+</body>
+</html>

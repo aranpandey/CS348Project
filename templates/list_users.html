@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head><title>All Users</title></head>
+<body>
+    <h1>All Users</h1>
+    <table border="1" cellpadding="10">
+        <tr>
+            <th>ID</th><th>Username</th><th>Email</th><th>Age</th><th>Weight (kg)</th><th>Height (cm)</th><th>Actions</th>
+        </tr>
+        {% for user in users %}
+        <tr>
+            <td>{{ user.user_id }}</td>
+            <td>{{ user.username }}</td>
+            <td>{{ user.email }}</td>
+            <td>{{ user.age }}</td>
+            <td>{{ user.weight_kg }}</td>
+            <td>{{ user.height_cm }}</td>
+            <td>
+                <a href="/users/update/{{ user.user_id }}">Edit</a> |
+                <form method="POST" action="/users/delete/{{ user.user_id }}" style="display:inline;">
+                    <button type="submit" onclick="return confirm('Delete this user?')">Delete</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+    <br><a href="/">← Back to Home</a>
+</body>
+</html>

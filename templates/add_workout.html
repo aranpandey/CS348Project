@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head><title>Add Workout</title></head>
+<body>
+    <h1>Add New Workout</h1>
+    <p><em>Notice: User and Exercise dropdowns are populated dynamically from the database!</em></p>
+    
+    <form method="POST">
+        <h3>Select User:</h3>
+        <select name="user_id" required>
+            <option value="">-- Choose User --</option>
+            {% for user in users %}
+                <option value="{{ user.user_id }}">{{ user.username }} ({{ user.email }})</option>
+            {% endfor %}
+        </select><br><br>
+        
+        <h3>Workout Details:</h3>
+        Date: <input type="date" name="workout_date" required><br><br>
+        Duration (min): <input type="number" name="duration_minutes" required><br><br>
+        Total Calories: <input type="number" step="0.1" name="total_calories" required><br><br>
+        Notes: <textarea name="notes"></textarea><br><br>
+        
+        <h3>Select Exercises:</h3>
+        <p><em>These exercises come from the database - add new ones to see them appear here!</em></p>
+        {% for exercise in exercises %}
+            <input type="checkbox" name="exercises" value="{{ exercise.exercise_id }}">
+            {{ exercise.exercise_name }} ({{ exercise.category }})<br>
+        {% endfor %}
+        <br>
+        
+        <button type="submit">Add Workout</button>
+    </form>
+    
+    {% if message %}<p style="color: green;">{{ message }}</p>{% endif %}
+    <br>
+    <a href="/exercises/add">➕ Add New Exercise to Database</a> |
+    <a href="/">← Back to Home</a>
+</body>
+</html>

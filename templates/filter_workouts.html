@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head><title>Filter Workouts</title></head>
+<body>
+    <h1>Filter Workouts</h1>
+    <form method="POST">
+        <h3>Calories Range:</h3>
+        Min: <input type="number" name="min_calories" value="0">
+        Max: <input type="number" name="max_calories" value="1000"><br><br>
+        
+        <h3>Duration Range (minutes):</h3>
+        Min: <input type="number" name="min_duration" value="0">
+        Max: <input type="number" name="max_duration" value="120"><br><br>
+        
+        <h3>Date Range:</h3>
+        Start: <input type="date" name="start_date" value="2026-01-01">
+        End: <input type="date" name="end_date" value="2026-12-31"><br><br>
+        
+        <button type="submit">Filter Workouts</button>
+    </form>
+    <br><a href="/">← Back to Home</a>
+</body>
+</html>

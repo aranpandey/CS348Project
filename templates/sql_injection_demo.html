@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SQL Injection Demo</title>
+    <style>
+        body { font-family: Arial; margin: 40px; }
+        .demo-section { background: #f5f5f5; padding: 20px; margin: 20px 0; border-radius: 8px; }
+        .vulnerable { border-left: 4px solid red; }
+        .safe { border-left: 4px solid green; }
+        input { padding: 8px; margin: 5px; width: 300px; }
+        button { padding: 10px 20px; background: #007bff; color: white; border: none; cursor: pointer; }
+        .result { margin-top: 15px; padding: 15px; background: white; border-radius: 4px; }
+        code { background: #272822; color: #f8f8f2; padding: 15px; display: block; margin: 10px 0; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <h1>SQL Injection Protection Demo</h1>
+    
+    <div class="demo-section vulnerable">
+        <h2> UNSAFE Method (String Concatenation)</h2>
+        <p><strong>Try injecting:</strong> <code>' OR '1'='1</code></p>
+        <form id="unsafeForm">
+            <input type="text" name="username" placeholder="Enter username" required>
+            <button type="submit">Search (Unsafe)</button>
+        </form>
+        <div id="unsafeResult" class="result" style="display:none;"></div>
+    </div>
+    
+    <div class="demo-section safe">
+        <h2> SAFE Method (Parameterized Queries)</h2>
+        <p><strong>Try the same injection:</strong> <code>' OR '1'='1</code></p>
+        <form id="safeForm">
+            <input type="text" name="username" placeholder="Enter username" required>
+            <button type="submit">Search (Safe)</button>
+        </form>
+        <div id="safeResult" class="result" style="display:none;"></div>
+    </div>
+    
+    <div class="demo-section">
+        <h2>Code Comparison</h2>
+        <h3>Unsafe (Vulnerable):</h3>
+        <code>query = f"SELECT * FROM users WHERE username = '{username}'"
+cur.execute(query)  #  DANGEROUS!</code>
+        
+        <h3>Safe (Protected):</h3>
+        <code>query = "SELECT * FROM users WHERE username = %s"
+cur.execute(query, (username,))  # SAFE!</code>
+    </div>
+    
+    <br><a href="/">← Back to Home</a>
+    
+    <script>
+        document.getElementById('unsafeForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const response = await fetch('/search-user-unsafe', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await response.json();
+            
+            const resultDiv = document.getElementById('unsafeResult');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = `
+                <h3>Result:</h3>
+                <p><strong>Query executed:</strong> <code>${data.query}</code></p>
+                <p><strong>Vulnerable:</strong> ${data.vulnerable ? 'YES ' : 'NO '}</p>
+                ${data.error ? `<p style="color:red;">Error: ${data.error}</p>` : ''}
+                ${data.users ? `<p>Found ${data.users.length} users</p>` : ''}
+                ${data.users && data.users.length > 0 ? `<p>SQL Injection succeeded! All users returned.</p>` : ''}
+            `;
+        });
+        
+        document.getElementById('safeForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const response = await fetch('/search-user-safe', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await response.json();
+            
+            const resultDiv = document.getElementById('safeResult');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = `
+                <h3>Result:</h3>
+                <p><strong>Query template:</strong> <code>${data.query}</code></p>
+                <p><strong>Parameter value:</strong> <code>${data.parameters}</code></p>
+                <p><strong>Vulnerable:</strong> ${data.vulnerable ? 'YES ' : 'NO '}</p>
+                ${data.users ? `<p>Found ${data.users.length} users</p>` : ''}
+                <p> SQL Injection prevented! Input was safely escaped.</p>
+            `;
+        });
+    </script>
+</body>
+</html>

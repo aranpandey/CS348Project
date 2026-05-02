@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Transactions Demo</title>
+    <style>
+        body { font-family: Arial; margin: 40px; }
+        .demo-section { background: #f5f5f5; padding: 20px; margin: 20px 0; border-radius: 8px; }
+        input, select { padding: 8px; margin: 5px; }
+        button { padding: 10px 20px; background: #007bff; color: white; border: none; cursor: pointer; }
+        .result { margin-top: 15px; padding: 15px; background: white; border-radius: 4px; }
+        code { background: #272822; color: #f8f8f2; padding: 2px 6px; border-radius: 3px; }
+        .info-box { background: #e3f2fd; padding: 15px; margin: 15px 0; border-left: 4px solid #2196F3; }
+    </style>
+</head>
+<body>
+    <h1>Transactions & Concurrency Demo</h1>
+    
+    <div class="info-box">
+        <h2> ACID Properties</h2>
+        <ul>
+            <li><strong>Atomicity:</strong> All operations in a transaction succeed or all fail</li>
+            <li><strong>Consistency:</strong> Database remains in a valid state</li>
+            <li><strong>Isolation:</strong> Concurrent transactions don't interfere with each other</li>
+            <li><strong>Durability:</strong> Committed changes are permanent</li>
+        </ul>
+    </div>
+    
+    <div class="demo-section">
+        <h2>Demo 1: Transfer Workout (ACID Transaction)</h2>
+        <p>This demonstrates an atomic transaction - transferring a workout from one user to another.</p>
+        
+        <form id="transferForm">
+            Workout ID: <input type="number" name="workout_id" value="1" required><br>
+            New User ID: <input type="number" name="new_user_id" value="2" required><br>
+            
+            <label>Isolation Level:</label>
+            <select name="isolation_level">
+                <option value="READ UNCOMMITTED">READ UNCOMMITTED</option>
+                <option value="READ COMMITTED" selected>READ COMMITTED (Default)</option>
+                <option value="REPEATABLE READ">REPEATABLE READ</option>
+                <option value="SERIALIZABLE">SERIALIZABLE</option>
+            </select><br><br>
+            
+            <button type="submit">Transfer Workout</button>
+        </form>
+        
+        <div id="transferResult" class="result" style="display:none;"></div>
+        
+        <div class="info-box">
+            <h3>Code Example:</h3>
+            <pre><code>try:
+    # BEGIN transaction (implicit)
+    cur.execute("SELECT * FROM workouts WHERE workout_id = %s FOR UPDATE", (workout_id,))
+    cur.execute("UPDATE workouts SET user_id = %s WHERE workout_id = %s", (new_user_id, workout_id))
+    conn.commit()  # COMMIT
+except:
+    conn.rollback()  # ROLLBACK on error</code></pre>
+        </div>
+    </div>
+    
+    <div class="demo-section">
+        <h2>Demo 2: Concurrent Updates (Race Condition Demo)</h2>
+        <p>This demonstrates why locking is important in concurrent scenarios.</p>
+        
+        <form id="concurrentForm">
+            User ID: <input type="number" name="user_id" value="1" required><br>
+            Weight Change (kg): <input type="number" step="0.1" name="weight_change" value="0.5" required><br>
+            
+            <label>
+                <input type="radio" name="use_transaction" value="true" checked>
+                Use Transaction with Row Lock (FOR UPDATE) 
+            </label><br>
+            <label>
+                <input type="radio" name="use_transaction" value="false">
+                No Row Lock (potential race condition) 
+            </label><br><br>
+            
+            <button type="submit">Update Weight</button>
+        </form>
+        
+        <div id="concurrentResult" class="result" style="display:none;"></div>
+        
+        <div class="info-box">
+            <h3>Isolation Levels Explained:</h3>
+            <ul>
+                <li><strong>READ UNCOMMITTED:</strong> Can read uncommitted changes (dirty reads)</li>
+                <li><strong>READ COMMITTED:</strong> Only reads committed data (default in PostgreSQL)</li>
+                <li><strong>REPEATABLE READ:</strong> Same data throughout transaction</li>
+                <li><strong>SERIALIZABLE:</strong> Strongest isolation, prevents all anomalies</li>
+            </ul>
+            
+            <h3>Why We Use READ COMMITTED:</h3>
+            <p>For a fitness tracker, READ COMMITTED is appropriate because:</p>
+            <ul>
+                <li>Users typically work on their own data</li>
+                <li>Prevents dirty reads while allowing good concurrency</li>
+                <li>Workout transfers are rare and can handle slight delays</li>
+            </ul>
+        </div>
+    </div>
+    
+    <br><a href="/">← Back to Home</a>
+    
+    <script>
+        document.getElementById('transferForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const response = await fetch('/transfer-workout', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await response.json();
+            
+            const resultDiv = document.getElementById('transferResult');
+            resultDiv.style.display = 'block';
+            
+            if (data.success) {
+                resultDiv.innerHTML = `
+                    <h3> Transaction Successful!</h3>
+                    <p>${data.message}</p>
+                    <p><strong>Isolation Level:</strong> ${data.isolation_level}</p>
+                    <p><strong>Old User ID:</strong> ${data.old_user_id}</p>
+                    <p><strong>New User ID:</strong> ${data.new_user_id}</p>
+                `;
+            } else {
+                resultDiv.innerHTML = `
+                    <h3> Transaction Failed</h3>
+                    <p style="color: red;">${data.message}</p>
+                    <p><strong>Isolation Level:</strong> ${data.isolation_level}</p>
+                `;
+            }
+        });
+        
+        document.getElementById('concurrentForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const response = await fetch('/concurrent-update-demo', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await response.json();
+            
+            const resultDiv = document.getElementById('concurrentResult');
+            resultDiv.style.display = 'block';
+            
+            if (data.success) {
+                resultDiv.innerHTML = `
+                    <h3>${data.safe ? '' : ''} Update Complete</h3>
+                    <p><strong>Method:</strong> ${data.method}</p>
+                    <p><strong>Old Weight:</strong> ${data.old_weight} kg</p>
+                    <p><strong>New Weight:</strong> ${data.new_weight} kg</p>
+                    ${data.warning ? `<p style="color: orange;"> ${data.warning}</p>` : ''}
+                `;
+            } else {
+                resultDiv.innerHTML = `
+                    <h3> Error</h3>
+                    <p style="color: red;">${data.error}</p>
+                `;
+            }
+        });
+    </script>
+</body>
+</html>
